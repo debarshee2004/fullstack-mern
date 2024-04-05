@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { createConnection } from "./chat.js";
+
 /**
  * The `useEffect()` Hook
  * ----------------------
@@ -25,12 +28,10 @@
  * useEffect(function, [dependencies]);
  */
 
-import { useEffect } from "react";
-import { createConnection } from "./chat.js";
-
 function ChatRoom({ roomId }) {
   const serverUrl = "https://localhost:1234";
 
+  // A useEffect function which connects to the serverUrl when there is a change in the serverUrl and the roomId.
   useEffect(() => {
     const connection = createConnection(serverUrl, roomId);
     connection.connect();
