@@ -1,0 +1,4 @@
+//   <Provider store={store}>
+//     <App />
+//   </Provider>,
+This is how we wrap the Application with the store.
