@@ -1,4 +1,4 @@
-const asyncFnHandler = (func = async (req, res, next) => {
+const AsyncFnHandler = (func = async (req, res, next) => {
   try {
     await func(req, res, next);
   } catch (error) {
@@ -9,4 +9,4 @@ const asyncFnHandler = (func = async (req, res, next) => {
   }
 });
 
-export { asyncFnHandler };
+export { AsyncFnHandler };
