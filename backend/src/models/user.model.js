@@ -51,17 +51,51 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+/**
+ * User Schema Middleware and Methods
+ *
+ * This code defines middleware and methods for a Mongoose User schema, providing functionality for
+ * password hashing, password comparison, and JWT token generation.
+ */
 
+// Pre-save middleware for hashing the password before saving a user document
+/**
+ * Pre-save Middleware
+ *
+ * This middleware is executed before saving a user document. It hashes the user's password
+ * if it has been modified.
+ *
+ * @param {Function} next - The next middleware function in the stack.
+ * @returns {void}
+ */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
+// Method to compare a given password with the hashed password stored in the database
+/**
+ * Check if Password is Correct
+ *
+ * This method compares a given plain text password with the hashed password stored in the database.
+ *
+ * @param {string} password - The plain text password to compare.
+ * @returns {Promise<boolean>} - A promise that resolves to true if the passwords match, otherwise false.
+ */
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
+// Method to generate an access token for the user
+/**
+ * Generate Access Token
+ *
+ * This method generates a JWT access token for the user. The token includes the user's ID,
+ * email, username, and fullname, and is signed with the access token secret from the environment variables.
+ *
+ * @returns {string} - The generated JWT access token.
+ */
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
@@ -77,6 +111,15 @@ userSchema.methods.generateAccessToken = function () {
   );
 };
 
+// Method to generate a refresh token for the user
+/**
+ * Generate Refresh Token
+ *
+ * This method generates a JWT refresh token for the user. The token includes only the user's ID,
+ * and is signed with the refresh token secret from the environment variables.
+ *
+ * @returns {string} - The generated JWT refresh token.
+ */
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {

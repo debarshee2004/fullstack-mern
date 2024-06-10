@@ -37,6 +37,12 @@ const videoSchema = new Schema(
   }
 );
 
+/**
+ * Adding mongooseAggregatePaginate Plugin to videoSchema
+ *
+ * This code adds the mongooseAggregatePaginate plugin to the video schema, enabling
+ * pagination for Mongoose aggregate queries.
+ */
 videoSchema.plugin(mongooseAggregatePaginate);
 
 export const Video = mongoose.model("Video", videoSchema);
