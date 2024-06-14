@@ -9,7 +9,7 @@
  * @param {Function} func - An asynchronous function (req, res, next) that serves as the route handler.
  * @returns {Function} - A new function that wraps the provided asynchronous function, handling errors.
  */
-const AsyncFnHandler = (func = async (req, res, next) => {
+const AsyncFnHandler = (func) => async (req, res, next) => {
   try {
     await func(req, res, next);
   } catch (error) {
@@ -18,6 +18,6 @@ const AsyncFnHandler = (func = async (req, res, next) => {
       message: error.message,
     });
   }
-});
+};
 
 export { AsyncFnHandler };
