@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
    * @param {Function} cb - Callback function to set the destination.
    */
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "public/temp"));
+    cb(null, "./public/temp");
   },
   /**
    * Set the filename for uploaded files.
