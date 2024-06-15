@@ -4,7 +4,7 @@ import { app } from "./app.js";
 
 // Configuration of Package for handling the Environtment Variables.
 dotenv.config({
-  path: "./env",
+  path: "./.env",
 });
 
 // Calling the function which will connect to the Database and starts the Express server.

@@ -1,7 +1,7 @@
 import { AsyncFnHandler } from "../utils/AsyncFnHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../utils/service/Cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 /**
@@ -18,11 +18,12 @@ import { ApiResponse } from "../utils/ApiResponse.js";
  */
 const registerUser = AsyncFnHandler(async (req, res) => {
   // Destructure user details from the request body
-  const { username, email, password, fullName } = req.body;
+  const { username, email, password, fullname } = req.body;
+  // console.log(req.body);
 
   // Validate that all fields are provided and not empty
   if (
-    [username, email, password, fullName].some((field) => field?.trim() === "")
+    [username, email, password, fullname].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields are required.", [], "");
   }
@@ -43,17 +44,30 @@ const registerUser = AsyncFnHandler(async (req, res) => {
   }
 
   // Get the local paths for the avatar and cover image files from the request
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  let coverImageLocalPath = req.files?.coverImage[0]?.path;
-
-  // Ensure coverImageLocalPath is defined if cover image is provided
+  let avatarLocalPath, coverimageLocalPath;
   if (
     req.files &&
-    Array.isArray(req.files.coverImage) &&
-    req.files.coverImage.length > 0
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
   ) {
-    coverImageLocalPath = req.files.coverImage[0].path;
+    avatarLocalPath = req.files.avatar[0].path;
   }
+  if (
+    req.files &&
+    Array.isArray(req.files.coverimage) &&
+    req.files.coverimage.length > 0
+  ) {
+    coverimageLocalPath = req.files.coverimage[0].path;
+  }
+
+  // Ensure coverimageLocalPath is defined if cover image is provided
+  // if (
+  //   req.files &&
+  //   Array.isArray(req.files.coverimage) &&
+  //   req.files.coverimage.length > 0
+  // ) {
+  //   coverimageLocalPath = req.files.coverimage[0].path;
+  // }
 
   // If avatar file is not provided, throw an error
   if (!avatarLocalPath) {
@@ -62,7 +76,9 @@ const registerUser = AsyncFnHandler(async (req, res) => {
 
   // Upload avatar and cover image to Cloudinary
   const avatar = await uploadOnCloudinary(avatarLocalPath);
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  const coverimage = coverimageLocalPath
+    ? await uploadOnCloudinary(coverimageLocalPath)
+    : null;
 
   // If avatar upload fails, throw an error
   if (!avatar) {
@@ -71,9 +87,9 @@ const registerUser = AsyncFnHandler(async (req, res) => {
 
   // Create a new user in the database
   const user = await User.create({
-    fullName,
+    fullname,
     avatar: avatar.url,
-    coverImage: coverImage?.url || "",
+    coverimage: coverimage?.url || "",
     email,
     password,
     username: username.toLowerCase(),
@@ -92,7 +108,7 @@ const registerUser = AsyncFnHandler(async (req, res) => {
   // Return the created user in the response with a success status
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
+    .json(new ApiResponse(201, createdUser, "User registered Successfully"));
 });
 
 export { registerUser };

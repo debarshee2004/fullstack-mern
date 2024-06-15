@@ -8,8 +8,6 @@
  */
 
 import multer from "multer";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
 
 // Define storage strategy
 const storage = multer.diskStorage({
@@ -32,8 +30,7 @@ const storage = multer.diskStorage({
    * @param {Function} cb - Callback function to set the filename.
    */
   filename: function (req, file, cb) {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
+    cb(null, file.originalname);
   },
 });
 
