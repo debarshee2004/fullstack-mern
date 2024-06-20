@@ -172,9 +172,11 @@ const registerUser = AsyncFnHandler(async (req, res) => {
  */
 const loginUser = AsyncFnHandler(async (req, res) => {
   const { email, username, password } = req.body;
+  // console.log(email, password);
 
   // Validate input: email or username is required
-  if (!email || !username) {
+  if (!email && !username) {
+    // (!(email || username))
     throw new ApiError(400, "Email or Username is Required.");
   }
 
@@ -182,6 +184,7 @@ const loginUser = AsyncFnHandler(async (req, res) => {
   const existingUser = await User.findOne({
     $or: [{ username }, { email }],
   });
+  // console.log(existingUser);
 
   // If user does not exist, throw a 404 error
   if (!existingUser) {
@@ -190,6 +193,7 @@ const loginUser = AsyncFnHandler(async (req, res) => {
 
   // Check if the provided password matches the stored password
   const isPasswordValid = await existingUser.isPasswordCorrect(password);
+  // console.log(isPasswordValid);
 
   // If password is incorrect, throw a 401 error
   if (!isPasswordValid) {

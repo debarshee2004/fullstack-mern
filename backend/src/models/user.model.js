@@ -70,7 +70,9 @@ const userSchema = new Schema(
  */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  // Use the line below in production
+  // this.password = await bcrypt.hash(this.password, 10);
+  // console.log(this.password);
   next();
 });
 
@@ -84,7 +86,10 @@ userSchema.pre("save", async function (next) {
  * @returns {Promise<boolean>} - A promise that resolves to true if the passwords match, otherwise false.
  */
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  // Use the line below in production
+  // return await bcrypt.compare(password, this.password);
+  // console.log(password, this.password);
+  return password === this.password;
 };
 
 // Method to generate an access token for the user
