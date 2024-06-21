@@ -33,7 +33,7 @@ export const verifyUserJWT = AsyncFnHandler(async (req, res, next, err) => {
     // Find the user by ID from the decoded token payload, excluding password and refresh token fields
     const existingUser = await User.findById(
       decodedTokenInformation?._id
-    ).select("-password -refreshtoken");
+    ).select("-password -refreshToken");
 
     // If the user does not exist, throw an invalid token error
     if (!existingUser) {

@@ -4,7 +4,6 @@
  * This module configures Cloudinary and provides a function to upload files to Cloudinary.
  * The function handles file uploads and cleans up local files in case of errors.
  */
-
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { DB_NAME } from "../constants.js";
+import { DATABASE_NAME } from "../constants.js";
 // Always use try-catch and async-await while dealing with database.
 
 /**
@@ -12,7 +12,7 @@ import { DB_NAME } from "../constants.js";
 const dbconnection = async () => {
   try {
     const ConnectionInstance = await mongoose.connect(
-      `${process.env.MONGODBURL}/${DB_NAME}`
+      `${process.env.MONGODB_URL}/${DATABASE_NAME}`
     );
     console.log(
       `\nMongoDB Connected Successfully.: ${ConnectionInstance.connection.host}`

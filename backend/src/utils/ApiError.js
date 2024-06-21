@@ -7,7 +7,7 @@
  * @class
  * @extends {Error}
  * @param {number} statusCode - The HTTP status code of the error.
- * @param {string} [message="Something went wrong"] - An optional message providing details about the error.
+ * @param {string} [message="Something went wrong with the API."] - An optional message providing details about the error.
  * @param {Array} [errors=[]] - An optional array of specific error details.
  * @param {string} [stack=""] - An optional stack trace for the error.
  */

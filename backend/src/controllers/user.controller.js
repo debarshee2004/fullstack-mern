@@ -211,6 +211,11 @@ const loginUser = AsyncFnHandler(async (req, res) => {
     secure: true, // Ensures cookies are sent only over HTTPS
   };
 
+  // Remove sensitive fields from the user object
+  const userResponse = await User.findOne(existingUser._id).select(
+    "-password -refreshToken"
+  );
+
   // Set cookies and respond with user data and tokens
   return res
     .status(200)
@@ -220,7 +225,7 @@ const loginUser = AsyncFnHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          user: existingUser, // Provide the logged-in user information
+          user: userResponse, // Provide the logged-in user information
           userAccessToken,
           userRefreshToken,
         },

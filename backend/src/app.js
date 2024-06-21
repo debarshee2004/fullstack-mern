@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 // Express Application
 const app = express();
 
-// Configurations for the Express Server.
+// Configurations for the Express Server and some Middlewares.
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
@@ -20,7 +20,7 @@ app.use(cookieParser());
 // Routes Import
 import userRouter from "./routes/user.routes.js";
 
-// Routes [http://localhost:8000]
+// LocalHost Routes: http://localhost:8000 or http://127.0.0.1:8000
 app.use("/api/v1/users", userRouter);
 
 export { app };

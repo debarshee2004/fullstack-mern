@@ -1,1 +1,1 @@
-export const DB_NAME = "fullstack_mern_backend";
+export const DATABASE_NAME = "fullstack_mern_backend";
