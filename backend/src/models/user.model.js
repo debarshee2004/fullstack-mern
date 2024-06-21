@@ -34,16 +34,16 @@ const userSchema = new Schema(
       type: String, // Cloudinary Url
       required: true,
     },
-    coverimage: {
+    coverImage: {
       type: String,
     },
-    watchhistory: [
+    watchHistory: [
       {
         type: Schema.Types.ObjectId,
         ref: "Video",
       },
     ],
-    refreshtoken: {
+    refreshToken: {
       type: String,
     },
   },

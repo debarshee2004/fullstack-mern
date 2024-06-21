@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/service/Cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 /**
  * Asynchronously generates an access token and a refresh token for a given user.
@@ -23,7 +24,7 @@ const generateAccessTokenAndRefreshTokens = async (userId) => {
     const userRefreshToken = existingUser.generateRefreshToken();
 
     // Assign the newly generated refresh token to the user's refreshToken field
-    existingUser.refreshtoken = userRefreshToken;
+    existingUser.refreshToken = userRefreshToken;
 
     // Save the updated user document in the database without validation
     const refreshTokenSavedinDatabase = await existingUser.save({
@@ -89,7 +90,7 @@ const registerUser = AsyncFnHandler(async (req, res) => {
   }
 
   // Get the local paths for the avatar and cover image files from the request
-  let avatarLocalPath, coverimageLocalPath;
+  let avatarLocalPath, coverImageLocalPath;
   if (
     req.files &&
     Array.isArray(req.files.avatar) &&
@@ -99,19 +100,19 @@ const registerUser = AsyncFnHandler(async (req, res) => {
   }
   if (
     req.files &&
-    Array.isArray(req.files.coverimage) &&
-    req.files.coverimage.length > 0
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
   ) {
-    coverimageLocalPath = req.files.coverimage[0].path;
+    coverImageLocalPath = req.files.coverImage[0].path;
   }
 
-  // Ensure coverimageLocalPath is defined if cover image is provided
+  // Ensure coverImageLocalPath is defined if cover image is provided
   // if (
   //   req.files &&
-  //   Array.isArray(req.files.coverimage) &&
-  //   req.files.coverimage.length > 0
+  //   Array.isArray(req.files.coverImage) &&
+  //   req.files.coverImage.length > 0
   // ) {
-  //   coverimageLocalPath = req.files.coverimage[0].path;
+  //   coverImageLocalPath = req.files.coverImage[0].path;
   // }
 
   // If avatar file is not provided, throw an error
@@ -121,8 +122,8 @@ const registerUser = AsyncFnHandler(async (req, res) => {
 
   // Upload avatar and cover image to Cloudinary
   const avatar = await uploadOnCloudinary(avatarLocalPath);
-  const coverimage = coverimageLocalPath
-    ? await uploadOnCloudinary(coverimageLocalPath)
+  const coverImage = coverImageLocalPath
+    ? await uploadOnCloudinary(coverImageLocalPath)
     : null;
 
   // If avatar upload fails, throw an error
@@ -134,7 +135,7 @@ const registerUser = AsyncFnHandler(async (req, res) => {
   const user = await User.create({
     fullname,
     avatar: avatar.url,
-    coverimage: coverimage?.url || "",
+    coverImage: coverImage?.url || "",
     email,
     password,
     username: username.toLowerCase(),
@@ -142,7 +143,7 @@ const registerUser = AsyncFnHandler(async (req, res) => {
 
   // Retrieve the created user without the password and refresh token fields
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshtoken"
+    "-password -refreshToken"
   );
 
   // If user creation fails, throw an internal server error
@@ -229,17 +230,20 @@ const loginUser = AsyncFnHandler(async (req, res) => {
 });
 
 const logoutUser = AsyncFnHandler(async (req, res) => {
+  // Remove the refresh token from the user document in the database
   await User.findByIdAndUpdate(req.user._id, {
     $set: {
-      refreshtoken: undefined,
+      refreshToken: "",
     },
   });
 
+  // Define cookie options to clear tokens
   const cookieOptions = {
-    httpOnly: true,
-    secure: true,
+    httpOnly: true, // Prevents client-side JavaScript from accessing the cookies
+    secure: true, // Ensures cookies are sent only over HTTPS
   };
 
+  // Clear the access and refresh token cookies and respond with a success message
   return res
     .status(200)
     .clearCookie("accessToken", cookieOptions)
@@ -247,4 +251,61 @@ const logoutUser = AsyncFnHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = AsyncFnHandler(async (req, res) => {
+  // Retrieve the refresh token from cookies or request body
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  // If no refresh token is provided, throw an unauthorized error
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized Request of the Refresh Token.");
+  }
+
+  try {
+    // Verify the incoming refresh token using the secret key
+    const decodedTokenInformation = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // Find the user associated with the decoded token information
+    const existingUser = await User.findById(decodedTokenInformation?._id);
+
+    // If the user does not exist, throw an invalid token error
+    if (!existingUser) {
+      throw new ApiError(401, "Invalid Refresh Token.");
+    }
+
+    // Check if the incoming refresh token matches the user's stored refresh token
+    if (incomingRefreshToken !== existingUser?.refreshToken) {
+      throw new ApiError(401, "Refresh token is expired or used.");
+    }
+
+    // Define cookie options for storing tokens
+    const cookieOptions = {
+      httpOnly: true, // Prevents client-side JavaScript from accessing the cookies
+      secure: true, // Ensures cookies are sent only over HTTPS
+    };
+
+    // Generate new access and refresh tokens
+    const { accessToken, newRefreshToken } =
+      await generateAccessTokenAndRefreshTokens(existingUser._id);
+
+    // Set new access and refresh tokens in cookies and respond with tokens
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid refresh token");
+  }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
