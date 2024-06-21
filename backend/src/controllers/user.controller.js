@@ -308,4 +308,48 @@ const refreshAccessToken = AsyncFnHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = AsyncFnHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  // Find the user by their ID stored in the request object
+  const existingUser = await User.findById(req.user?._id);
+
+  // Check if the provided old password is correct
+  const isPasswordCorrect = await existingUser.isPasswordCorrect(oldPassword);
+
+  // If the old password is incorrect, throw a 400 error
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid old password");
+  }
+
+  // Update the user's password with the new password
+  existingUser.password = newPassword;
+  await existingUser.save({ validateBeforeSave: false });
+
+  // Respond with a success message
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+const getCurrentUser = AsyncFnHandler(async (req, res) => {
+  // Respond with the current user information stored in the request object
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        req.user,
+        "Currently Active User fetched successfully"
+      )
+    );
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+};
