@@ -357,7 +357,7 @@ const updateAccountDetails = AsyncFnHandler(async (req, res) => {
     throw new ApiError(400, "All fields are Required.");
   }
 
-  const updatedUser = User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -435,6 +435,79 @@ const updateUserCoverImage = AsyncFnHandler(async (req, res) => {
     );
 });
 
+const getUserChannelProfile = AsyncFnHandler(async (req, res) => {
+  const { username } = req.params;
+
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is missing");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        email: 1,
+        username: 1,
+        fullName: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel does not exists");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "User Channel fetched successfully")
+    );
+});
+
+const getWatchHistory = AsyncFnHandler(async (req, res) => {});
+
 export {
   registerUser,
   loginUser,
@@ -445,4 +518,6 @@ export {
   updateAccountDetails,
   updateUserAvater,
   updateUserCoverImage,
+  getUserChannelProfile,
+  getWatchHistory,
 };
