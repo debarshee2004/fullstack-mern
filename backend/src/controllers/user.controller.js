@@ -350,6 +350,91 @@ const getCurrentUser = AsyncFnHandler(async (req, res) => {
     );
 });
 
+const updateAccountDetails = AsyncFnHandler(async (req, res) => {
+  const { fullname, email } = req.body;
+
+  if (!fullname || !email) {
+    throw new ApiError(400, "All fields are Required.");
+  }
+
+  const updatedUser = User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullname,
+        email,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedUser, "Account details updated successfully.")
+    );
+});
+
+const updateUserAvater = AsyncFnHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing.");
+  }
+
+  const newAvatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!newAvatar.url) {
+    throw new ApiError(400, "Error happend while updating new Avatar.");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.updatedUser?._id,
+    {
+      $set: {
+        avatar: newAvatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedUser, "Avatar image updated successfully")
+    );
+});
+
+const updateUserCoverImage = AsyncFnHandler(async (req, res) => {
+  const coverLocalPath = req.file?.path;
+
+  if (!coverLocalPath) {
+    throw new ApiError(400, "Cover Image file is missing.");
+  }
+
+  const newCover = await uploadOnCloudinary(coverLocalPath);
+
+  if (!newCover.url) {
+    throw new ApiError(400, "Error happend while updating new Cover Image.");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: newCover.url,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedUser, "Cover Image updated successfully")
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -357,4 +442,7 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
+  updateAccountDetails,
+  updateUserAvater,
+  updateUserCoverImage,
 };
