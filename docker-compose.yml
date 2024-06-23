@@ -1,56 +1,61 @@
 version: "3.7"
 
 services:
+  # Backend server service
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
-    image: myapp-server
-    container_name: myapp-node-server
-    command: /usr/src/app/node_modules/.bin/nodemon server.js
+      context: ./server # Path to the directory containing Dockerfile for server
+      dockerfile: Dockerfile # Dockerfile to use for building the server image
+    image: myapp-server # Name for the server image
+    container_name: myapp-node-server # Container name for the server
+    command: /usr/src/app/node_modules/.bin/nodemon server.js # Command to run when container starts
     volumes:
-      - ./server/:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./server/:/usr/src/app # Mounting local server code into the container
+      - /usr/src/app/node_modules # Mounting node_modules to prevent reinstallation
     ports:
-      - "5000:5000"
+      - "5000:5000" # Port mapping: local_machine_port:container_port
     depends_on:
-      - mongo
-    env_file: ./server/.env
+      - mongo # Ensure 'mongo' service is running before starting 'server'
+    env_file: ./server/.env # Environment file for server service
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=development # Setting NODE_ENV environment variable
     networks:
-      - app-network
+      - app-network # Connect to 'app-network' defined below
+
+  # MongoDB service
   mongo:
-    image: mongo
+    image: mongo # Official MongoDB Docker image from Docker Hub
     volumes:
-      - data-volume:/data/db
+      - data-volume:/data/db # Persist MongoDB data
     ports:
-      - "27017:27017"
+      - "27017:27017" # Port mapping for MongoDB
     networks:
-      - app-network
+      - app-network # Connect to 'app-network' defined below
+
+  # Frontend client service
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
-    image: myapp-client
-    container_name: myapp-react-client
-    command: npm start
+      context: ./client # Path to the directory containing Dockerfile for client
+      dockerfile: Dockerfile # Dockerfile to use for building the client image
+    image: myapp-client # Name for the client image
+    container_name: myapp-react-client # Container name for the client
+    command: npm start # Command to run when container starts
     volumes:
-      - ./client/:/usr/app
-      - /usr/app/node_modules
+      - ./client/:/usr/app # Mounting local client code into the container
+      - /usr/app/node_modules # Mounting node_modules to prevent reinstallation
     depends_on:
-      - server
+      - server # Ensure 'server' service is running before starting 'client'
     ports:
-      - "3000:3000"
+      - "3000:3000" # Port mapping: local_machine_port:container_port
     networks:
-      - app-network
+      - app-network # Connect to 'app-network' defined below
 
 networks:
   app-network:
-    driver: bridge
+    driver: bridge # Using bridge network driver for 'app-network'
 
 volumes:
-  data-volume:
-  node_modules:
+  data-volume: # Docker volume for MongoDB data persistence
+  node_modules: # Docker volume for node_modules caching
   web-root:
-    driver: local
+    driver: local # Using local driver for 'web-root' volume
